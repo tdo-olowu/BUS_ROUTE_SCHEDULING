@@ -14,15 +14,30 @@ classdef Visualizer
 
             obj.fig = figure;
             obj.hPlot = plot(G);
+            % remove these two lines if causing trouble
+            obj.hPlot.XData = obj.hPlot.XData;
+            obj.hPlot.YData = obj.hPlot.YData;
+
+            % make directed edges more visible
+            obj.hPlot.ArrowSize = 18;      % bigger arrows
+            obj.hPlot.LineWidth = 1.5;     % thicker edges
+            obj.hPlot.EdgeAlpha = 0.7;     % slightly transparent
+
+            % colors edges by weight
+            % if ismember('Weight', obj.G.Edges.Properties.VariableNames)
+            %     obj.hPlot.EdgeCData = obj.G.Edges.Weight;
+            %     colormap(parula);
+            %     colorbar;
+        %end
 
             title('Bus Simulation');
         end
 
         function obj = update(obj, stations, buses, t)
             % Clear figure and redraw (simple but reliable)
-            clf(obj.fig);
-
-            obj.hPlot = plot(obj.G);
+            % clf(obj.fig);
+            % 
+            % obj.hPlot = plot(obj.G);
 
             % ---------------------------
             % 1. NODE COLOR = QUEUE SIZE
@@ -43,10 +58,17 @@ classdef Visualizer
             colorbar;
 
             % ---------------------------
-            % 2. SHOW QUEUE SIZE LABELS
+            % 2. SHOW QUEUE SIZE LABELS AND NODE NAMES
             % ---------------------------
-            labels = string(queueSizes);
-            labelnode(obj.hPlot, 1:length(queueSizes), labels);
+            % labels = string(queueSizes);
+            % labelnode(obj.hPlot, 1:length(queueSizes), labels);
+            % the above two lines are old visualization code.
+            names = string(obj.G.Nodes.Name(:));
+            qs = string(queueSizes(:));
+            labels = names + " (" + qs + ")";
+            labelnode(obj.hPlot, 1:numnodes(obj.G), labels);
+            % CGPT suggested the following as an alternative:
+            % obj.hPlot.NodeLabel = string(obj.G.Nodes.Name(:)) + " (" + string(queueSizes(:)) + ")";
 
             % ---------------------------
             % 3. HIGHLIGHT BUS POSITIONS
@@ -58,6 +80,16 @@ classdef Visualizer
             % that was causing errors. Instead...
             % Start from base colors
             nodeColors = obj.hPlot.NodeCData;
+
+            %%
+            To animate smoothly, you need:
+
+current node
+
+next node
+
+progress (0 → 1 along edge)
+            %%
 
             % Force bus nodes to max intensity (red in jet colormap)
             nodeColors(positions) = 1.2; % slightly above max for emphasis

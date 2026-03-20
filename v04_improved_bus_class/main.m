@@ -1,32 +1,34 @@
 clear; clc;
 
-%% GRAPH SETUP
-numStations = 7;
+%%% GRAPH SETUP
+numStations = 11;
 
-s = [1 1 2 2 3 4 5];
-t = [2 3 4 5 6 6 7];
-weights = [1 2 1 2 1 2 1];
+s = [1 2 3 4 4 4 5 6 7 8 9 10 11];
+t = [2 3 4 5 7 9 6 8 8 9 10 11 1]; % (s,t) is an edge
+weights = [5 10 1 3 5 1 5 5 5 2 6 3 7]; % time in mins
+names = {'Gate' 'OpaDam' 'BankArea' 'MainBusStop' 'Moremi' ...
+         'Awo' 'NewMarket' 'Faj' 'CarPark' 'ReligiousGround' 'LocalGovt'};
 
-G = graph(s, t, weights);
+G = digraph(s, t, weights, names);
 
-busParks = [1, 7];
+busParks = [4, 9];
 
 figure;
 
-%% CREATE STATIONS
+%%% CREATE STATIONS
 stations = Station.empty;
 
 for i = 1:numStations
     stations(i) = Station(i);
 end
 
-%% CREATE BUSES
+%%% CREATE BUSES
 buses = [
     Bus(busParks(1), 5, 20), ...
     Bus(busParks(2), 5, 20)
 ];
 
-%% SIMULATION
+%%% SIMULATION
 T = 30;
 
 viz = Visualizer(G);
@@ -34,12 +36,12 @@ viz = Visualizer(G);
 for t = 1:T
     fprintf('\n--- Time %d ---\n', t);
 
-    %% GENERATE STUDENTS
+    %%% GENERATE STUDENTS
     for i = 1:numStations
         stations(i) = stations(i).generateStudents(numStations);
     end
 
-    %% UPDATE BUSES
+    %%% UPDATE BUSES
     for b = 1:length(buses)
 
         % Drop off
@@ -61,11 +63,13 @@ for t = 1:T
             buses(b).remainingMileage);
     end
 
-    %% ✅ VISUALIZE ONCE PER TIME STEP
+    %%% ✅ VISUALIZE ONCE PER TIME STEP
     viz = viz.update(stations, buses, t);
+    
+    % pause so visualization doesn't fly by
+    pause(0.1);
 
-end
-    %% VISUALIZATION
+    %% old VISUALIZATION
     %clf;
     %h = plot(G);
 
@@ -78,4 +82,3 @@ end
     % drawnow;
 
 end
-

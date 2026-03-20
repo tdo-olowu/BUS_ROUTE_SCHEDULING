@@ -1,15 +1,17 @@
 clear; clc;
 
 %%% GRAPH SETUP
-numStations = 7;
+numStations = 11;
 
-s = [1 1 2 2 3 4 5];
-t = [2 3 4 5 6 6 7];
-weights = [1 2 1 2 1 2 1];
+s = [1 2 3 4 4 4 5 6 7 8 9 10 11];
+t = [2 3 4 5 7 9 6 8 8 9 10 11 1]; % (s,t) is an edge
+weights = [5 10 1 3 5 1 5 5 5 2 6 3 7]; % time in mins
+names = {'Gate' 'OpaDam' 'BankArea' 'MainBusStop' 'Moremi' ...
+         'Awo' 'NewMarket' 'Faj' 'CarPark' 'ReligiousGround' 'LocalGovt'};
 
-G = graph(s, t, weights);
+G = digraph(s, t, weights, names);
 
-busParks = [1, 7];
+busParks = [4, 9];
 
 figure;
 

@@ -3,6 +3,7 @@
 classdef Bus
     properties
         currentNode
+        %nextNode
         passengers
         capacity
         remainingMileage

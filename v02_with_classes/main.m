@@ -9,7 +9,7 @@ weights = [5 10 1 3 5 1 5 5 5 2 6 3 7]; % time in mins
 names = {'Gate' 'OpaDam' 'BankArea' 'MainBusStop' 'Moremi' ...
          'Awo' 'NewMarket' 'Faj' 'CarPark' 'ReligiousGround' 'LocalGovt'};
 
-G = digraph(s, t, weights);
+G = digraph(s, t, weights, names);
 
 busParks = [4, 9];
 
