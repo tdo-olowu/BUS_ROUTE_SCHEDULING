@@ -1,0 +1,177 @@
+% NOTES:
+% All time is measured in minutes, and distance in metres.
+
+
+clear; clc;
+
+% INITIALIZE SIMULATION PARAMETERS
+BUS_COUNT = 5; % five buses
+STUDENT_COUNT = 50;
+TIME_SPAN = 200; % 200 time steps in minutes. About 4 hours
+
+% ROAD NETWORK SETUP
+STATION_COUNT = 11;
+listOfStations = Station.empty;
+for i = 1:STATION_COUNT
+    listOfStations(i) = Station(i);
+end
+
+SPEED_LIMIT = 30; % metres per minute
+s = [1 2 3 4 4 4 5 6 7 8 9 10 11];
+t = [2 3 4 5 7 9 6 8 8 9 10 11 1]; % (s,t) is an edge
+weights = [5 10 1 3 5 1 5 5 5 2 6 3 7]; % time in mins. Double if too short
+names = {'Gate' 'OpaDam' 'BankArea' 'MainBusStop' 'Moremi' ...
+         'Awo' 'NewMarket' 'Faj' 'CarPark' 'ReligiousGround' 'LocalGovt'};
+
+G = digraph(s, t, weights, names);
+
+% --------------------------------
+% Create Students
+% --------------------------------
+listOfStudents = Student.empty;
+for i = 1:STUDENT_COUNT
+    origin = randi(STATION_COUNT);
+    destination = randi(STUDENT_COUNT);
+    while destination == origin     % ensures dest != origin
+        destination = randi(STATION_COUNT);
+    end
+    % uniform distribution, probably.
+    listOfStudents(i) = Student(i, origin, destination);
+end
+
+
+% ------------------------------------------
+%   CREATE BUSES
+% ------------------------------------------
+BUS_PARKS = [4, 9];
+
+BUS_CAPACITY = 5;   % in people
+BUS_MILEAGE = 20;   % total mileage needed before refuel, in metres
+BUS_SPEED = 10;     % in metres per minute. Weird, but makes sense in ctx
+BUS_WAIT_RATE = 1;  % number of minutes spent when bus is idle.
+                    % handles upload, offload and refuel time for now.
+
+listOfBuses = Bus.empty;
+for i = 1:BUS_COUNT
+    startNode = BUS_PARKS(randi(2)); % randomly choose either
+    listOfBuses(i) = Bus( ...
+        i, ...
+        startNode, ...
+        BUS_CAPACITY, ...
+        BUS_MILEAGE, ...
+        SPEED_LIMIT, ... % all buses assumed to move at speed limit.
+        BUS_WAIT_RATE, ...  % boarding rate
+        BUS_WAIT_RATE, ...  % offboarding rate
+    );
+end
+
+
+% -------------------------------
+%   Assign students to stations
+% -------------------------------
+for i = 1:length(listOfStudents)
+    s = listOfStudents(i);
+    % place the students at their origins
+    listOfStations(s.origin).addStudent(s.id);
+end
+
+
+% -------------------------------
+%  Metrics
+% -------------------------------
+metrics.served = 0;     % proportion of students served during timespan
+metrics.failures = 0;   % proportion of buses that run out of fuel midway
+metrics.totalTransitTime = 0;   % the total transit time aggregated by all students
+
+% --------------------------------
+%   Visualizer instantiation
+% --------------------------------
+viz = Visualizer(G);
+figure; % is this necessary?
+
+
+%%
+%     %% Visualizer instantiation by CGPT suggestion
+%     viz = Visualizer(G, X, Y);
+
+% % OLD CREATE BUSES
+% T = TIME_SPAN;
+% buses = [
+%     Bus(1, busParks(1), BUS_CAPACITY, BUS_MILEAGE, BUS_SPEED, BUS_WAIT_RATE, BUS_WAIT_RATE), ...
+%     Bus(2, busParks(2), BUS_CAPACITY, BUS_MILEAGE, BUS_SPEED, BUS_WAIT_RATE, BUS_WAIT_RATE)
+% ];
+
+
+% =================================
+%   MAIN LOOP
+% =================================
+for t = 1:TIME_SPAN
+    fprintf("Time step: %d\n", t);
+    % ---- Update Buses ----
+    for i = 1:length(listOfBuses)
+        % the update will depend on a lot more state information than just stations.
+        %`  previously update(G, listOfStations)
+        listOfBuses(i) = listOfBuses(i).update();
+    end
+    % ---- Update Stations ----
+    for i = 1:length(listOfStations)
+        listOfStations(i) = listOfStations(i).update();
+    end
+    % ---- Update Students ----
+    for i = 1:length(listOfStudents)
+        listOfStudents(i) = listOfStudents(i).update();
+    end
+    % ---- Finally, update metrics ----
+    %   will generally depend on object data and parameters
+    metrics = updateMetrics(metrics, listOfStudents);
+    % ---- Visualize ----
+        viz.draw(listOfBuses, listOfStations);
+end
+
+
+
+% old mainloop
+% for t = 1:T
+%     fprintf('\n--- Time %d ---\n', t);
+% 
+%     %%% GENERATE STUDENTS
+%     for i = 1:numStations
+%         stations(i) = stations(i).generateStudents(numStations);
+%     end
+% 
+%     %%% UPDATE BUSES
+%     for b = 1:length(buses)
+% 
+%         % Drop off
+%         %buses(b) = buses(b).dropOff();
+% 
+%         % Pick up
+%         %node = buses(b).currentNode;
+%         %[buses(b), stations(node)] = buses(b).pickUp(stations(node));
+% 
+%         % Decide next move
+%         target = buses(b).decideNextNode(G);
+% 
+%         % Move
+%         buses(b) = buses(b).move(G);
+% 
+%         % fprintf('Bus %d at %d | Passengers: %d | Fuel: %d\n', ...
+%         %     b, buses(b).currentNode, ...
+%         %     length(buses(b).passengers), ...
+%         %     buses(b).remainingMileage);
+%     end
+% 
+%     %%% ✅ VISUALIZE ONCE PER TIME STEP
+%     viz = viz.update(stations, buses, t);
+% 
+%     % pause so visualization doesn't fly by
+%     pause(0.1);
+% end
+
+
+% ==============================
+%   FINALIZATION
+% ==============================
+fprintf("Simulation complete.\n");
+metrics = updateMetrics(metrics, listOfStudents);
+printReport(metrics);

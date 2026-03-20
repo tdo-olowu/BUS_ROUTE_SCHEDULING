@@ -1,3 +1,6 @@
+% NOTES:
+% All time is measured in minutes, and distance in metres.
+
 clear; clc;
 
 %%% GRAPH SETUP
@@ -12,6 +15,11 @@ names = {'Gate' 'OpaDam' 'BankArea' 'MainBusStop' 'Moremi' ...
 G = digraph(s, t, weights, names);
 
 busParks = [4, 9];
+SPEED_LIMIT = 300; % metres per minute
+BUS_CAPACITY = 5;
+BUS_MILEAGE = 20;
+BUS_SPEED = 10;
+BUS_WAIT_RATE = 1;
 
 figure;
 
@@ -23,9 +31,10 @@ for i = 1:numStations
 end
 
 %%% CREATE BUSES
+% Bus(id, startNode, capacity, mileage, speed, boardingRate, offloadingRate)
 buses = [
-    Bus(busParks(1), 5, 20), ...
-    Bus(busParks(2), 5, 20)
+    Bus(1, busParks(1), BUS_CAPACITY, BUS_MILEAGE, BUS_SPEED, BUS_WAIT_RATE, BUS_WAIT_RATE), ...
+    Bus(2, busParks(2), BUS_CAPACITY, BUS_MILEAGE, BUS_SPEED, BUS_WAIT_RATE, BUS_WAIT_RATE)
 ];
 
 %%% SIMULATION
@@ -45,22 +54,22 @@ for t = 1:T
     for b = 1:length(buses)
 
         % Drop off
-        buses(b) = buses(b).dropOff();
+        %buses(b) = buses(b).dropOff();
 
         % Pick up
-        node = buses(b).currentNode;
-        [buses(b), stations(node)] = buses(b).pickUp(stations(node));
+        %node = buses(b).currentNode;
+        %[buses(b), stations(node)] = buses(b).pickUp(stations(node));
 
         % Decide next move
-        target = buses(b).decideTarget(G, stations, busParks);
+        target = buses(b).decideNextNode(G);
 
         % Move
-        buses(b) = buses(b).move(G, target);
+        buses(b) = buses(b).move(G);
 
-        fprintf('Bus %d at %d | Passengers: %d | Fuel: %d\n', ...
-            b, buses(b).currentNode, ...
-            length(buses(b).passengers), ...
-            buses(b).remainingMileage);
+        % fprintf('Bus %d at %d | Passengers: %d | Fuel: %d\n', ...
+        %     b, buses(b).currentNode, ...
+        %     length(buses(b).passengers), ...
+        %     buses(b).remainingMileage);
     end
 
     %%% ✅ VISUALIZE ONCE PER TIME STEP
