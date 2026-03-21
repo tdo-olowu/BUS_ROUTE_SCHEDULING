@@ -20,9 +20,7 @@ classdef Station
             obj.queue(end+1) = studentId;
         end
 
-        function obj = removeStudents(obj, indices)
-            obj.queue(indices) = [];
-        end
+        func
 
         % updates the queue as students board the Bus
         function obj = update(obj)
@@ -30,6 +28,17 @@ classdef Station
         end
     end
 end
+
+%%
+%         function obj = removeStudents(obj, indices)
+%             obj.waitingStudents(indices) = [];
+%         end
+% 
+%         function obj = update(obj)
+%             % optional future logic
+%         end
+%     end
+% end
 
 
 %%

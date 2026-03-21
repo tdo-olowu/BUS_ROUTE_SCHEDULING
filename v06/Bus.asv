@@ -38,15 +38,13 @@ classdef Bus
             obj.edgeWeight = 1; % default
         end
 
-
         % sets next state based on current state
-        function [obj, stations, students] = updateState(obj, G, stations, students)
+        function obj = updateState(obj, G, stations)
             switch obj.state
                 case "IDLE" % either loading, unloading or etc 
                     % e.g if IDLE and obj.fuel_low() and at depot, then
                     % refuel
-                    [obj, stations, students] = ...
-                        obj.handleIdleState(G, stations, students);
+                    obj = obj.handleIdleState(G, stations);
                 case "MOVING" % currently moving
                     obj = obj.handleMovingState(G);
                 case "RETURNING"
@@ -60,8 +58,7 @@ classdef Bus
                     error("Unknown state");
             end
         end
-
-
+        
         % ------------------------------------
         %   IMPLEMENTING STATE HANDLERS
         % ------------------------------------
@@ -134,7 +131,7 @@ classdef Bus
             station.queue(1:numToBoard) = [];
         end
 
-        % --- handleMovingState --- 
+        % --- handleMovingState --- %
         function obj = handleMovingState(obj, G)
             % move along edge
             obj = obj.move(G);
@@ -149,7 +146,6 @@ classdef Bus
             % placeholder for later
             obj = obj.move(G);
         end
-
 
         %% Decide next node (simple traversal for now)
         function obj = decideNextNode(obj, G)

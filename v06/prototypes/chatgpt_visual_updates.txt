@@ -1,0 +1,208 @@
+Nice—this is where your visualizer starts to feel *alive*. Let’s tackle both: clearer **directed edges** and **smooth bus animation**.
+
+---
+
+# 🚦 1. Make direction (arrows) clear in `digraph`
+
+MATLAB already draws arrows for `digraph`, but they’re often too subtle. You can make them much clearer by tweaking edge properties.
+
+### ✅ Update your plotting section
+
+Right after:
+
+```matlab
+obj.hPlot = plot(obj.G);
+```
+
+Add:
+
+```matlab
+% Improve directed edge visibility
+obj.hPlot.ArrowSize = 12;      % bigger arrows
+obj.hPlot.LineWidth = 1.5;     % thicker edges
+obj.hPlot.EdgeAlpha = 0.7;     % slightly transparent
+```
+
+---
+
+### 🎯 Optional: color edges by direction/weight
+
+If your graph has weights or flow:
+
+```matlab
+if ismember('Weight', obj.G.Edges.Properties.VariableNames)
+    obj.hPlot.EdgeCData = obj.G.Edges.Weight;
+    colormap(parula);
+    colorbar;
+end
+```
+
+---
+
+### 🧭 BEST PRACTICE: Fix node positions (important!)
+
+Right now every `clf` + `plot()` reshuffles layout → arrows become hard to follow.
+
+👉 Fix positions once in constructor:
+
+```matlab
+% In constructor
+obj.hPlot = plot(G);
+obj.hPlot.XData = obj.hPlot.XData;
+obj.hPlot.YData = obj.hPlot.YData;
+```
+
+Better:
+
+```matlab
+layout(obj.hPlot, 'force');   % or 'layered' for directed graphs
+```
+
+Then **reuse positions later** (don’t recompute layout every frame).
+
+---
+
+# 🚌 2. Smooth bus animation (instead of jumping)
+
+Right now buses "teleport" between nodes:
+
+```matlab
+positions = [buses.currentNode];
+```
+
+To animate smoothly, you need:
+
+* current node
+* next node
+* progress (0 → 1 along edge)
+
+---
+
+## ✅ Step 1: Add bus interpolation data
+
+Each bus should have:
+
+```matlab
+bus.currentNode
+bus.nextNode
+bus.progress   % value between 0 and 1
+```
+
+---
+
+## ✅ Step 2: Get node coordinates
+
+```matlab
+X = obj.hPlot.XData;
+Y = obj.hPlot.YData;
+```
+
+---
+
+## ✅ Step 3: Compute smooth positions
+
+Replace your bus highlighting logic with:
+
+```matlab
+% ---------------------------
+% 3. DRAW MOVING BUSES
+% ---------------------------
+hold on;
+
+X = obj.hPlot.XData;
+Y = obj.hPlot.YData;
+
+for i = 1:length(buses)
+    b = buses(i);
+
+    x1 = X(b.currentNode);
+    y1 = Y(b.currentNode);
+
+    x2 = X(b.nextNode);
+    y2 = Y(b.nextNode);
+
+    % Linear interpolation
+    xb = (1 - b.progress)*x1 + b.progress*x2;
+    yb = (1 - b.progress)*y1 + b.progress*y2;
+
+    plot(xb, yb, 'ro', 'MarkerSize', 8, 'MarkerFaceColor', 'r');
+end
+
+hold off;
+```
+
+---
+
+## ✨ Result
+
+Instead of:
+
+* 🔴 jumping node → node
+
+You get:
+
+* 🟢 smooth movement along edges
+
+---
+
+# 🔥 Bonus: Animate over time (very smooth)
+
+If you want *continuous motion within one timestep*:
+
+```matlab
+for p = linspace(0,1,10)
+    for i = 1:length(buses)
+        buses(i).progress = p;
+    end
+
+    obj = obj.update(stations, buses, t);
+    pause(0.05);
+end
+```
+
+---
+
+# 🧠 Small but important upgrade
+
+### ❌ Current issue:
+
+```matlab
+clf(obj.fig);
+obj.hPlot = plot(obj.G);
+```
+
+This:
+
+* resets layout every frame
+* kills smooth animation
+
+---
+
+### ✅ Better approach:
+
+Only update properties:
+
+```matlab
+% DON'T recreate plot every time
+% Just update colors + labels
+obj.hPlot.NodeCData = colors;
+obj.hPlot.NodeLabel = obj.G.Nodes.Name + " (" + string(queueSizes) + ")";
+```
+
+---
+
+# 🧩 Final mental model
+
+* **Graph = static map**
+* **Nodes = stations**
+* **Edges = roads (with arrows)**
+* **Buses = moving points interpolated along edges**
+
+---
+
+If you want next step upgrades, I can help you:
+
+* add **edge congestion visualization**
+* draw **bus trails (history paths)**
+* or turn this into a **real-time simulation UI (play/pause/slider)**
+

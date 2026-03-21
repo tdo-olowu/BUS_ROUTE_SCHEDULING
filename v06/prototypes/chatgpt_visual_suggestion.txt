@@ -1,0 +1,206 @@
+You’re thinking about this the right way—strip it down to *movement first*, then layer in pickups later. The key upgrade now is:
+➡️ **separate “node-to-node logic” from “continuous movement along edges.”**
+
+That’s where `nextNode` and smooth animation come from.
+
+---
+
+# 🚌 Updated `Bus` class (movement-focused, future-proofed)
+
+This version:
+
+* adds all your requested properties
+* supports **edge traversal with progress (0 → 1)** for smooth visualization
+* keeps logic simple (random traversal for now)
+
+```matlab
+classdef Bus
+    properties
+        id                  % unique ID
+
+        currentNode         % current node index
+        nextNode            % next node index (target along edge)
+        progress            % progress along edge (0 → 1)
+
+        destinations        % list of nodes to visit (future use)
+        currentStudents     % list of students (future use)
+
+        capacity
+        remainingMileage
+
+        speed               % for future (not used yet)
+        boardingRate        % students per timestep
+        offloadingRate      % students per timestep
+
+        state               % "IDLE", "MOVING", "RETURNING"
+    end
+
+    methods
+        %% Constructor
+        function obj = Bus(id, startNode, capacity, mileage, speed, boardingRate, offloadingRate)
+            obj.id = id;
+
+            obj.currentNode = startNode;
+            obj.nextNode = startNode;
+            obj.progress = 0;
+
+            obj.destinations = [];
+            obj.currentStudents = [];
+
+            obj.capacity = capacity;
+            obj.remainingMileage = mileage;
+
+            obj.speed = speed;
+            obj.boardingRate = boardingRate;
+            obj.offloadingRate = offloadingRate;
+
+            obj.state = "IDLE";
+        end
+
+        %% Decide next node (simple traversal for now)
+        function obj = decideNextNode(obj, G)
+            neighbors = neighbors(G, obj.currentNode);
+
+            if isempty(neighbors)
+                obj.nextNode = obj.currentNode;
+                return;
+            end
+
+            % Random walk for now (can upgrade later)
+            obj.nextNode = neighbors(randi(length(neighbors)));
+
+            obj.state = "MOVING";
+            obj.progress = 0;
+        end
+
+        %% Move along edge (smooth motion)
+        function obj = move(obj, G)
+            % If already at node, pick next node
+            if obj.currentNode == obj.nextNode
+                obj = obj.decideNextNode(G);
+            end
+
+            % Advance along edge
+            step = 0.2;  % controls smoothness (smaller = smoother)
+            obj.progress = obj.progress + step;
+
+            % If reached next node
+            if obj.progress >= 1
+                obj.currentNode = obj.nextNode;
+                obj.progress = 0;
+
+                % Decide next step immediately
+                obj = obj.decideNextNode(G);
+            end
+
+            obj.remainingMileage = obj.remainingMileage - step;
+        end
+
+        %% Get interpolated position (for visualization)
+        function [x, y] = getPosition(obj, X, Y)
+            x1 = X(obj.currentNode);
+            y1 = Y(obj.currentNode);
+
+            x2 = X(obj.nextNode);
+            y2 = Y(obj.nextNode);
+
+            % Linear interpolation
+            x = (1 - obj.progress)*x1 + obj.progress*x2;
+            y = (1 - obj.progress)*y1 + obj.progress*y2;
+        end
+    end
+end
+```
+
+---
+
+# 🧠 Key Design Decisions (important)
+
+## 1. ✅ `progress` (this is the missing piece)
+
+Without this, buses *jump*. With it:
+
+* `0` → at current node
+* `1` → reached next node
+* between → moving along edge
+
+---
+
+## 2. ✅ `nextNode` is now well-defined
+
+Instead of computing shortest path every step:
+
+* pick a neighbor
+* move toward it smoothly
+* repeat
+
+Later you can swap:
+
+```matlab
+obj.nextNode = neighbors(randi(length(neighbors)));
+```
+
+with:
+
+* shortest path routing
+* demand-based routing
+* depot return logic
+
+---
+
+## 3. ✅ `getPosition()` cleanly decouples visualization
+
+Your visualizer should now do:
+
+```matlab
+[X, Y] = deal(obj.hPlot.XData, obj.hPlot.YData);
+
+for i = 1:length(buses)
+    [xb, yb] = buses(i).getPosition(X, Y);
+    plot(xb, yb, 'ro', 'MarkerFaceColor','r');
+end
+```
+
+👉 No more guessing positions in the visualizer.
+
+---
+
+## 4. ✅ Future-proofing (your requested fields)
+
+Already wired for later:
+
+* `destinations` → routing constraints
+* `currentStudents` → derive destinations
+* `boardingRate` / `offloadingRate` → time-based loading
+* `speed` → can scale `step` later
+
+---
+
+# 🚀 What you’ll see now
+
+With this + your visualizer:
+
+* buses move **smoothly along edges**
+* they **wander the graph**
+* no pickups yet (clean mental model)
+
+---
+
+# 🔜 Next logical step (when you’re ready)
+
+Don’t jump ahead yet—but the next clean upgrade would be:
+
+👉 Replace random walk with:
+
+* **shortest-path-following movement**
+* while still using `progress`
+
+That’s where your original routing logic plugs back in cleanly.
+
+---
+
+If you want, I can help you next:
+
+* integrate this cleanly into your `Visualizer` (so no flicker)
+* or upgrade movement from random → goal-directed without breaking animation
+
