@@ -6,7 +6,7 @@ clear; clc;
 
 % INITIALIZE SIMULATION PARAMETERS
 BUS_COUNT = 5; % five buses
-STUDENT_COUNT = 50;
+STUDENT_COUNT = 15;
 TIME_SPAN = 200; % 200 time steps in minutes. About 4 hours
 
 % ROAD NETWORK SETUP
@@ -22,7 +22,6 @@ t = [2 3 4 5 7 9 6 8 8 9 10 11 1]; % (s,t) is an edge
 weights = [5 10 1 3 5 1 5 5 5 2 6 3 7]; % time in mins. Double if too short
 names = {'Gate' 'OpaDam' 'BankArea' 'MainBusStop' 'Moremi' ...
          'Awo' 'NewMarket' 'Faj' 'CarPark' 'ReligiousGround' 'LocalGovt'};
-
 G = digraph(s, t, weights, names);
 
 % --------------------------------
@@ -61,7 +60,7 @@ for i = 1:BUS_COUNT
         BUS_MILEAGE, ...
         SPEED_LIMIT, ... % all buses assumed to move at speed limit.
         BUS_WAIT_RATE, ...  % boarding rate
-        BUS_WAIT_RATE, ...  % offboarding rate
+        BUS_WAIT_RATE ...  % offboarding rate
     );
 end
 
@@ -111,7 +110,7 @@ for t = 1:TIME_SPAN
     for i = 1:length(listOfBuses)
         % the update will depend on a lot more state information than just stations.
         %`  previously update(G, listOfStations)
-        listOfBuses(i) = listOfBuses(i).update();
+        %listOfBuses(i) = listOfBuses(i).updateState(G, listOfStations);
     end
     % ---- Update Stations ----
     for i = 1:length(listOfStations)
@@ -125,7 +124,9 @@ for t = 1:TIME_SPAN
     %   will generally depend on object data and parameters
     metrics = updateMetrics(metrics, listOfStudents);
     % ---- Visualize ----
-        viz.draw(listOfBuses, listOfStations);
+    % function obj = update(obj, stations, buses, t)
+        % viz.draw(listOfBuses, listOfStations); // CGPT stuff
+        viz.update(listOfStations, listOfBuses, t);
 end
 
 

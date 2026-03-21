@@ -1,55 +1,60 @@
 % STATION
 
 % NEW SUGGESTION:
-% classdef Station
-%     properties
-%         id
-%         waitingStudents
-%     end
-% 
-%     methods
-%         function obj = Station(id)
-%             obj.id = id;
-%             obj.waitingStudents = [];
-%         end
-% 
-%         function obj = addStudent(obj, studentId)
-%             obj.waitingStudents(end+1) = studentId;
-%         end
-% 
-%         function obj = update(obj)
-%             % placeholder
-%         end
-%     end
-% end
-
-
-%%
+% queue was prev named waitingStudents, in case anything breaks
 classdef Station
     properties
         id
-        queue % list of destinations
+        queue
     end
 
     methods
+        % Constructor
         function obj = Station(id)
             obj.id = id;
             obj.queue = [];
         end
 
-        function obj = generateStudents(obj, numStations)
-            % Random student arrivals
+        % adds a student with given ID to the queue for the bus
+        function obj = addStudent(obj, studentId)
+            obj.queue(end+1) = studentId;
+        end
 
-            numNew = randi([0,2]);
-
-            for k = 1:numNew
-                dest = randi(numStations);
-                while dest == obj.id
-                    dest = randi(numStations);
-                end
-
-                obj.queue(end+1) = dest;
-            end
+        % updates the queue as students board the Bus
+        function obj = update(obj)
+            % placeholder
         end
     end
 end
+
+
+%%
+% OLD STATION
+% classdef Station
+%     properties
+%         id
+%         queue % list of destinations
+%     end
+% 
+%     methods
+%         function obj = Station(id)
+%             obj.id = id;
+%             obj.queue = [];
+%         end
+% 
+%         function obj = generateStudents(obj, numStations)
+%             % Random student arrivals
+% 
+%             numNew = randi([0,2]);
+% 
+%             for k = 1:numNew
+%                 dest = randi(numStations);
+%                 while dest == obj.id
+%                     dest = randi(numStations);
+%                 end
+% 
+%                 obj.queue(end+1) = dest;
+%             end
+%         end
+%     end
+% end

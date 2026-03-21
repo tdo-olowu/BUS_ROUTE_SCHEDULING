@@ -1,5 +1,3 @@
-% VISUALIZER
-
 classdef Visualizer
     properties
         G

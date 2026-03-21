@@ -17,7 +17,7 @@ classdef Bus
         boardingRate        % students per timestep
         offloadingRate      % students per timestep
 
-        state               % "IDLE", "MOVING", "RETURNING"
+        state               % "IDLE", "MOVING", "RETURNING", etc
     end
 
     methods
@@ -36,6 +36,97 @@ classdef Bus
 
             obj.state = "IDLE";
             obj.edgeWeight = 1; % default
+        end
+
+        % sets next state based on current state
+        function obj = updateState(obj, G, stations)
+            switch obj.state
+                case "IDLE" % either loading, unloading or etc 
+                    % e.g if IDLE and obj.fuel_low() and at depot, then
+                    % refuel
+                    obj = obj.handleIdleState(G, stations);
+                case "MOVING" % currently moving
+                    obj = obj.handleMovingState(G);
+                case "RETURNING"
+                    obj = obj.handleReturningState(G);
+                case "FAILED"   % ran out of mileage while in transit
+                    %obj = obj.handleFailedState(G);
+                case "LATE"     % could not make it back to bus garage b4
+                    % end of simulation
+                    %obj = obj.handleLateState(G);
+                otherwise
+                    error("Unknown state");
+            end
+        end
+        
+        % ------------------------------------
+        %   IMPLEMENTING STATE HANDLERS
+        % ------------------------------------
+        function obj = handleIdleState(obj, G, stations)
+            % --- Drop off students first ---
+            obj = obj.offloadStudents();
+            % --- Pick up students ---
+            [obj, stations(obj.currentNode)] = obj.boardStudents(stations(obj.currentNode));
+            % --- Decide next move ---
+            obj = obj.decideNextNode(G);
+            % if there is somewhere to go
+            if obj.currentNode -= obj.nextNode
+                obj.state = "MOVING";
+            end
+        end
+
+        % ---- drop off students at Stations ---- %
+        function obj = offloadStudents(obj)
+            if isempty(obj.currentStudents)
+                return;
+            end
+            % Find students whose destination = current node
+            toDrop = [];
+            for i = 1:length(obj.currentStudents)
+                s = obj.currentStudents(i);
+                if s.destination = obj.currentNode
+                    toDrop(end+1) = i;
+                end
+            end
+            % Remove them
+            obj.currentStudents(toDrop) = [];
+        end
+
+        % ---- board Students on the bus ---- %
+        function [obj, station] = boardStudents(obj, station)
+            availableSeats = obj.capacity - length(obj.currentStudents);
+            if availableSeats <= 0
+                return;
+            end
+            waiting = station.waitingStudents;
+            if isempty(waiting)
+                return;
+            end
+            % take as many as possible
+            numToBoard = min(obj.boardingRate, availableSeats);
+            numToBoard = min(numToBoard, length(waiting));
+
+            % Add students
+            obj.currentStudents = [obj.currentStudents, waiting(1:numToBoard)];
+
+            % Remove from station
+            station.waitingStudents(1:numToBoard) = [];
+        end
+
+        % --- handleMovingState --- %
+        function obj = handleMovingState(obj, G)
+            % move along edge
+            obj = obj.move(G);
+            % If arrived, switch to IDLE
+            if obj.progress == 0
+                obj.state = "IDLE";
+            end
+        end
+
+        %--- handleReturningState ---%
+        function obj = handleReturningState(obj, G)
+            % placeholder for later
+            obj = obj.move(G);
         end
 
         %% Decide next node (simple traversal for now)
