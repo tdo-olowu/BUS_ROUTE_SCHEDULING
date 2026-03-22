@@ -6,7 +6,6 @@ classdef Student
         busId
         destination
         isServed = false
-        % hasFailed = false
         state                   % "WAITING", "ON_BUS", "ARRIVED"
         transitTime
     end
@@ -33,11 +32,3 @@ classdef Student
     end
 end
 
-
-%%
-%         function obj = update(obj)
-%             if obj.state ~= "ARRIVED" && obj.state ~= "FAILED"
-%                 obj.transitTime = obj.transitTime + 1;
-%             end
-%         end
-%     end

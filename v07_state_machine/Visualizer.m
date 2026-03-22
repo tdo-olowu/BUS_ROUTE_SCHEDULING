@@ -1,5 +1,3 @@
-% VISUALIZER
-
 classdef Visualizer
     properties
         G
@@ -81,14 +79,54 @@ classdef Visualizer
             % Start from base colors
             nodeColors = obj.hPlot.NodeCData;
 
-            %%
-            To animate smoothly, you need:
+%             %%
+%             To animate smoothly, you need:
+%                 current node
+%                 next node
+%             progress (0 → 1 along edge)
+%             Step 1: Add interpolation data to buses
+%                 bus.currentNode
+%                 bus.nextNode
+%                 bus.progress   % value between 0 and 1
+%             Step 2: Get node coordinates
+%                 X = obj.hPlot.XData;
+%                 Y = obj.hPlot.YData;
+%             Step 3: compute smooth position logic. Replace bus highlighting
+%             logic with:
+%                 % ---------------------------
+% % 3. DRAW MOVING BUSES
+% % ---------------------------
+% hold on;
+% 
+% X = obj.hPlot.XData;
+% Y = obj.hPlot.YData;
+% 
+% for i = 1:length(buses)
+%     b = buses(i);
+% 
+%     x1 = X(b.currentNode);
+%     y1 = Y(b.currentNode);
+% 
+%     x2 = X(b.nextNode);
+%     y2 = Y(b.nextNode);
+% 
+%     % Linear interpolation
+%     xb = (1 - b.progress)*x1 + b.progress*x2;
+%     yb = (1 - b.progress)*y1 + b.progress*y2;
+% 
+%     plot(xb, yb, 'ro', 'MarkerSize', 8, 'MarkerFaceColor', 'r');
+% end
+% 
+% hold off;
 
-current node
-
-next node
-
-progress (0 → 1 along edge)
+            % An if you want smooth animation during a timestep
+            %     for p = linspace(0,1,10)
+            %         for i = 1:length(buses)
+            %             buses(i).progress = p;
+            %         end
+            %         obj = obj.update(stations, buses, t);
+            %         pause(0.05);
+            %     end
             %%
 
             % Force bus nodes to max intensity (red in jet colormap)

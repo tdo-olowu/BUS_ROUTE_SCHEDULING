@@ -66,7 +66,7 @@ classdef Bus
         %   IMPLEMENTING STATE HANDLERS
         % ------------------------------------
         function [obj, stations, students] = handleIdleState(obj, G, stations, students)
-            % --- Drop off students first ---
+            % --- Drop off students firs10t ---
             [obj, students] = obj.offloadStudents(students);
             % --- Pick up students ---
             [obj, stations(obj.currentNode), students] = ...
@@ -98,6 +98,8 @@ classdef Bus
             end
             % Remove them
             obj.currentStudents(toDrop) = [];
+            % performance_metrics.served = ...
+            %     performance_metrics.served + length(toDrop);
         end
 
 

@@ -5,15 +5,16 @@
 clear; clc;
 
 % INITIALIZE SIMULATION PARAMETERS
-BUS_COUNT = 5; % five buses
-STUDENT_COUNT = 15;
-TIME_SPAN = 20; % 200 time steps in minutes. About 4 hours
+BUS_COUNT = 3; % three buses
+STUDENT_COUNT = 1;
+TIME_SPAN = 50; % 200 time steps in minutes. About 4 hours
 
 % ROAD NETWORK SETUP
 STATION_COUNT = 11; % DO NOT CHANGE THIS!!!
 listOfStations = Station.empty;
 for i = 1:STATION_COUNT
     listOfStations(i) = Station(i);
+    % queue initially empty
 end
 
 SPEED_LIMIT = 30; % metres per minute
@@ -30,13 +31,14 @@ G = digraph(s, t, weights, names);
 listOfStudents = Student.empty;
 for i = 1:STUDENT_COUNT
     origin = randi(STATION_COUNT);
-    destination = randi(STUDENT_COUNT);
+    destination = randi(STATION_COUNT);
     while destination == origin     % ensures dest != origin
         destination = randi(STATION_COUNT);
     end
     % uniform distribution, probably.
     listOfStudents(i) = Student(i, origin, destination);
-    pr
+    % for debugging
+    %fprintf("\tSTUDENT%d ORIGIN %d DESTINATION %d\n", i, origin, destination);
 end
 
 
@@ -51,6 +53,7 @@ BUS_SPEED = 10;     % in metres per minute. Weird, but makes sense in ctx
 BUS_WAIT_RATE = 1;  % number of minutes spent when bus is idle.
                     % handles upload, offload and refuel time for now.
 
+% Bus(id, startNode, capacity, speed, boardingRate, offloadingRate)
 listOfBuses = Bus.empty;
 for i = 1:BUS_COUNT
     startNode = BUS_PARKS(randi(2)); % randomly choose either
@@ -58,10 +61,9 @@ for i = 1:BUS_COUNT
         i, ...
         startNode, ...
         BUS_CAPACITY, ...
-        BUS_MILEAGE, ...
         SPEED_LIMIT, ... % all buses assumed to move at speed limit.
         BUS_WAIT_RATE, ...  % boarding rate
-        BUS_WAIT_RATE ...  % offboarding rate
+        BUS_WAIT_RATE ...  % offloading rate
     );
 end
 
@@ -74,41 +76,40 @@ for i = 1:length(listOfStudents)
     % place the students at their origins
     listOfStations(s.origin).addStudent(s.id);
 end
+% for debugging
+% for i = 1:length(listOfStations)
+%     debugPrintList("Q: ", listOfStations(i).queue);
+% end
 
 
 % -------------------------------
 %  Metrics
 % -------------------------------
-metrics.served = 0;     % proportion of students served during timespan
-metrics.failures = 0;   % proportion of buses that run out of fuel midway
-metrics.totalTransitTime = 0;   % the total transit time aggregated by all students
+% performance_metrics.served = 0;     % proportion of students served during timespan
+% performance_metrics.failures = 0;   % proportion of buses that run out of fuel midway
+% performance_metrics.totalTransitTime = 0;   % the total transit time aggregated by all students
 
 % --------------------------------
 %   Visualizer instantiation
 % --------------------------------
 viz = Visualizer(G);
-%figure; % is this necessary?
-
-
-%%
-%     %% Visualizer instantiation by CGPT suggestion
-%     viz = Visualizer(G, X, Y);
 
 
 % =================================
 %   MAIN LOOP
 % =================================
 for t = 1:TIME_SPAN
+    % ---- Visualize ----
+    viz.update(listOfStations, listOfBuses, t);
     fprintf("Time step: %d\n", t);
     % ---- Update Buses ----
     for i = 1:length(listOfBuses)
         % the update will depend on a lot more state information than just stations.
-        %`  previously update(G, listOfStations)
         listOfBuses(i) = listOfBuses(i).updateState(G, listOfStations, listOfStudents);
-        fprintf('\tBus %d at %d | Passengers: %d | Fuel: %d\n', ...
-             i, listOfBuses(i).currentNode, ...
-                length(listOfBuses(i).currentStudents), ...
-                listOfBuses(i).remainingMileage);
+        % fprintf('\tBus %d at %d | Passengers: %d | Fuel: %d\n', ...
+        %      i, listOfBuses(i).currentNode, ...
+        %         length(listOfBuses(i).currentStudents), ...
+        %         listOfBuses(i).remainingMileage);
     end
     % ---- Update Stations ----
     for i = 1:length(listOfStations)
@@ -120,11 +121,7 @@ for t = 1:TIME_SPAN
     end
     % ---- Finally, update metrics ----
     %   will generally depend on object data and parameters
-    metrics = updateMetrics(metrics, listOfStudents);
-    % ---- Visualize ----
-    % function obj = update(obj, stations, buses, t)
-        % viz.draw(listOfBuses, listOfStations); // CGPT stuff
-        viz.update(listOfStations, listOfBuses, t);
+    % performance_metrics = updateMetrics(performance_metrics, listOfStudents);
 end
 
 
@@ -132,5 +129,5 @@ end
 %   FINALIZATION
 % ==============================
 fprintf("Simulation complete.\n");
-metrics = updateMetrics(metrics, listOfStudents);
-printReport(metrics);
+% performance_metrics = updateMetrics(performance_metrics, listOfStudents);
+% printReport(performance_metrics);
