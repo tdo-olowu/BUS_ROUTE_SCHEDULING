@@ -19,10 +19,11 @@ classdef Bus
         % Capacity
         capacity
 
-        % Rates
+        % Rates and Times
         boardingRate    % for now, number of students per timestep
         offloadingRate
         speed           % not in m/s, but proportion of speed limit e.g. 0.5, 1
+        expectedTimeOfJourney   % how many time steps a journey is expected to take
 
         % State machine
         state
@@ -57,6 +58,7 @@ classdef Bus
 
             obj.state = "START";
             obj.timer = 0;
+            obj.expectedTimeOfJourney = 0;
 
             obj.startDepot = startNode;
             obj.hasBoardedThisTrip = false;
@@ -89,20 +91,39 @@ classdef Bus
                 obj.state = "BOARDING";
             else
                 obj = obj.planNextMove(G);
+                obj = obj.enterTransit(G);
                 obj.state = "TRANSIT";
             end
         end
 
-        %% Hanlder for TRANSIT state
-        function obj = handleTransit(obj, G)
+        %% Enter the transit state. Mainly sets timer for progress calculation
+        function obj = enterTransit(obj, G)
             edgeIdx = findedge(G, obj.currentNode, obj.nextNode);
             weight = G.Edges.Weight(edgeIdx);
+
+            obj.expectedTimeOfJourney = ceil(weight / obj.speed);
+            obj.timer = obj.expectedTimeOfJourney;
+            fprintf("TIMER IN PROGRESS: %d\n", obj.timer);
+        end
+
+        %% Hanlder for TRANSIT state
+        function obj = handleTransit(obj, G)
+            % edgeIdx = findedge(G, obj.currentNode, obj.nextNode);
+            % weight = G.Edges.Weight(edgeIdx);
 
             % this part is the trickiest.
             % step = obj.speed / weight;
             % obj.progress = obj.progress + step;
-            step = 1 / (obj.speed * weight);
-            obj.progress = obj.progress + step;
+
+            % calculate progress inefficiently
+            progress = (1 - (obj.timer / obj.expectedTimeOfJourney));
+            %fprintf("\tProgress for Bus %d: %f\n", obj.id, progress);
+            % WE ARE GETTING NEGATIVE TIMES!
+            obj.timer = obj.timer - 1;
+            if obj.timer < obj.expectedTimeOfJourney
+                fprintf("\tTIME LARGER THAN EXPECTED for Bus%d!: t=%d, e=%d\n", ...
+                    obj.id, obj.timer, obj.expectedTimeOfJourney);
+            end
 
             if obj.progress < 1
                 return;
@@ -118,7 +139,7 @@ classdef Bus
 
                 obj.state = "PARKED";
             else
-                fprintf("Too much progress");
+                fprintf("unusual progress");
                 %error("Progress overflow error");
             end
         end
@@ -159,6 +180,7 @@ classdef Bus
             obj.hasBoardedThisTrip = true;
 
             obj = obj.planNextMove(G);
+            obj = obj.enterTransit(G);    % set things up before changing state
             obj.state = "TRANSIT";
 
         end

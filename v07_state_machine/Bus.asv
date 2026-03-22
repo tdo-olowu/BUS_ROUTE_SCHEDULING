@@ -19,10 +19,11 @@ classdef Bus
         % Capacity
         capacity
 
-        % Rates
-        boardingRate
+        % Rates and Times
+        boardingRate    % for now, number of students per timestep
         offloadingRate
-        speed
+        speed           % not in m/s, but proportion of speed limit e.g. 0.5, 1
+        expectedTimeOfJourney   % how many time steps a journey is expected to take
 
         % State machine
         state
@@ -57,13 +58,14 @@ classdef Bus
 
             obj.state = "START";
             obj.timer = 0;
+            obj.expectedTimeOfJourney = 0;
 
             obj.startDepot = startNode;
             obj.hasBoardedThisTrip = false;
         end
 
         %% State Update
-        function [obj, stations, students] = update(obj, G, stations, students)
+        function [obj, stations, students] = updateState(obj, G, stations, students)
             switch obj.state
                 case "START"
                     [obj, stations, students] = obj.handleStart(stations, students, G);
@@ -89,27 +91,38 @@ classdef Bus
                 obj.state = "BOARDING";
             else
                 obj = obj.planNextMove(G);
+                obj = obj.enterTransit(G);
                 obj.state = "TRANSIT";
             end
         end
 
-        %% Hanlder for TRANSIT state
-        function obj = handleTransit(obj, G)
+        %% Enter the transit state. Mainly sets timer for progress calculation
+        function obj = enterTransit(obj, G)
             edgeIdx = findedge(G, obj.currentNode, obj.nextNode);
             weight = G.Edges.Weight(edgeIdx);
 
+            obj.expectedTimeOfJourney = ceil(weight / obj.speed);
+            obj.timer = obj.expectedTimeOfJourney;
+            fprintf("TIM%d")
+        end
+
+        %% Hanlder for TRANSIT state
+        function obj = handleTransit(obj, G)
+            % edgeIdx = findedge(G, obj.currentNode, obj.nextNode);
+            % weight = G.Edges.Weight(edgeIdx);
+
             % this part is the trickiest.
-            % both speed and weight were originally in units of time,
-            % but to correct this, speed should be a dimensionless unit
-            % representing proportion of the speed limit.
-            % then step = weight / obj.proportional_speed
-            step = obj.speed / weight;
-            obj.progress = obj.progress + step;
+            % step = obj.speed / weight;
+            % obj.progress = obj.progress + step;
+
+            % calculate progress inefficiently
+            progress = ceil(1 - (obj.timer / obj.expectedTimeOfJourney));
+            fprintf("\tProgress for Bus %d: %d\n", obj.id, progress);
+            obj.timer = obj.timer - 1;
 
             if obj.progress < 1
                 return;
-            elseif obj.progress >= 1 && obj.progress <= 1.01
-
+            elseif obj.progress >= 1 && obj.progress <= 1.10 % MgnOfError
                 obj.currentNode = obj.nextNode;
                 obj.progress = 0;
 
@@ -120,9 +133,9 @@ classdef Bus
                 end
 
                 obj.state = "PARKED";
-
             else
-                error("Progress overflow error");
+                fprintf("unusual progress");
+                %error("Progress overflow error");
             end
         end
 
@@ -162,6 +175,7 @@ classdef Bus
             obj.hasBoardedThisTrip = true;
 
             obj = obj.planNextMove(G);
+            obj = obj.enterTransit(G);    % set things up before changing state
             obj.state = "TRANSIT";
 
         end
