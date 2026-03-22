@@ -1,0 +1,69 @@
+classdef Bus
+    properties
+        id                  % unique ID
+
+        currentNode         % current node index
+        nextNode            % next node index (target along edge)
+        progress            % progress along edge (0 → 1)
+
+        destinations        % list of nodes to visit (currently not implementing this feature)
+        currentStudents     % list of students currently on bus (future use)
+
+        capacity	    % maximum number of students the bus can convey
+        remainingMileage    % how much more distance the bus can travel. For future use.
+
+        speed               % buses assumed to move at exactly the speed limit whtever it may be
+        boardingRate        % how many students per timestep can board
+        offloadingRate      % how many students per timestep can be offloaded 
+
+        state               % "IDLE", "MOVING", "RETURNING". IDLE means waiting at a stop.
+				% MOVING means in transit, conveying students. RETURNING means returning
+				% to a bus park.
+    end
+
+    methods
+        %% Constructor
+        function obj = Bus(id, startNode, capacity, mileage, speed, boardingRate, offloadingRate)
+
+        %% Decide next node - this is where most of the heavy lifting will be
+        function obj = decideNextNode(obj, G)
+		% insert decision policy here. For now, goal is to traverse entire graph and return
+        end
+
+        %% Move along edge (smooth motion)
+        function obj = move(obj, G)
+            % If already at node, pick next node
+            if obj.currentNode == obj.nextNode
+                obj = obj.decideNextNode(G);
+            end
+
+            % Advance along edge
+            step = 0.2;  % controls smoothness (smaller = smoother)
+            obj.progress = obj.progress + step;
+
+            % If reached next node
+            if obj.progress >= 1
+                obj.currentNode = obj.nextNode;
+                obj.progress = 0;
+
+                % Decide next step immediately
+                obj = obj.decideNextNode(G);
+            end
+
+            %obj.remainingMileage = obj.remainingMileage - step;
+        end
+
+        %% Get interpolated position (for visualization)
+        function [x, y] = getPosition(obj, X, Y)
+            x1 = X(obj.currentNode);
+            y1 = Y(obj.currentNode);
+
+            x2 = X(obj.nextNode);
+            y2 = Y(obj.nextNode);
+
+            % Linear interpolation
+            x = (1 - obj.progress)*x1 + obj.progress*x2;
+            y = (1 - obj.progress)*y1 + obj.progress*y2;
+        end
+    end
+end

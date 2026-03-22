@@ -11,7 +11,7 @@
 clear; clc;
 
 % INITIALIZE SIMULATION PARAMETERS
-BUS_COUNT = 1; % three buses
+BUS_COUNT = 4; % 2^n buses
 STUDENT_COUNT = 500;
 TIME_SPAN = 100; % 200 time steps in minutes. About 4 hours
 
@@ -58,7 +58,7 @@ end
 % ------------------------------------------
 BUS_PARKS = [4, 9];
 
-BUS_CAPACITY = 5;   % in people
+BUS_CAPACITY = 14;   % in people
 BUS_MILEAGE = 20;   % total mileage needed before refuel, in metres
 BUS_SPEED = 1.0;    % move at the speed limit. keep it b/w 0 and 1
 BUS_WAIT_RATE = 1;  % number of minutes spent when bus is idle.
@@ -143,4 +143,4 @@ end
 fprintf("Simulation complete.\n");
 simStats = computeSimStats(listOfStudents, listOfBuses);
 printReport(TIME_SPAN, BUS_COUNT, STUDENT_COUNT, simStats);
-saveReport(TIME_SPAN, BUS_COUNT, STUDENT_COUNT, simStats, 'report.txt');
+%saveReport(TIME_SPAN, BUS_COUNT, STUDENT_COUNT, simStats, 'reports/report1.txt');

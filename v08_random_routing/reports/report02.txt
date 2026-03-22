@@ -1,0 +1,8 @@
+===== Simulation Report =====
+Timespan (minutes): 100
+Total Number of Buses: 2
+Total Number of Students: 500
+Students served: 13
+Total transit time: 2097.00
+Average transit time: 161.31
+Number of buses which finished work: 0

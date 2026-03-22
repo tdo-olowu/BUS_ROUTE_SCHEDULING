@@ -1,4 +1,4 @@
-classdef Visualizer
+classdef Visualizer < handle
     properties
         G
         hPlot          % handle to graph plot
@@ -6,15 +6,21 @@ classdef Visualizer
         busScatter   % handle for bus markers
         X            % node x-coordinates
         Y            % node y-coordinates
+        ax
     end
 
     methods
         % constructor
         function obj = Visualizer(G)
+            % Extra improvements if needed:
+            % obj.busScatter.SizeData = 50;
+            % obj.busScatter.MarkerFaceAlpha = 0.8;
             obj.G = G;
 
             obj.fig = figure;
-            obj.hPlot = plot(G);
+            obj.ax = axes(obj.fig);   % explicitly create axes
+            obj.hPlot = plot(obj.ax, G); %-------------------%
+            hold(obj.ax, 'on');   % VERY IMPORTANT
 
             % Store node coordinates
             obj.X = obj.hPlot.XData;
@@ -29,7 +35,7 @@ classdef Visualizer
             colorbar;
 
             % Initialize empty bus scatter
-            obj.busScatter = scatter(nan, nan, 40, 'ks', 'filled');
+            obj.busScatter = scatter(obj.ax, nan, 40, 'ks', 'filled');
 
             % colors edges by weight
             % if ismember('Weight', obj.G.Edges.Properties.VariableNames)
@@ -42,10 +48,14 @@ classdef Visualizer
         end
 
         %% the update function.
-        function obj = update(obj, stations, buses, t)
+        %function obj = update(obj, stations, buses, t)
+        function update(obj, stations, buses, t)
             % ---------------------------
             % 1. NODE COLOR = QUEUE SIZE
             % ---------------------------
+            % if ~isvalid(obj.hPlot)
+            %     error("hPlot was deleted before update()");
+            % end
             queueSizes = arrayfun(@(s) length(s.queue), stations);
 
             % Normalize for coloring
@@ -57,9 +67,7 @@ classdef Visualizer
             end
 
             % Apply color (heat-like using colormap)
-            colormap(jet);
             obj.hPlot.NodeCData = colors;
-            colorbar;
 
             % ---------------------------
             % 2. SHOW QUEUE SIZE LABELS AND NODE NAMES
@@ -67,32 +75,46 @@ classdef Visualizer
             names = string(obj.G.Nodes.Name(:));
             qs = string(queueSizes(:));
             labels = names + " (" + qs + ")";
+            % this line redraws blah-blah.
             labelnode(obj.hPlot, 1:numnodes(obj.G), labels);
             % CGPT suggested the following as an alternative:
             % obj.hPlot.NodeLabel = string(obj.G.Nodes.Name(:)) + " (" + string(queueSizes(:)) + ")";
 
             % ---------------------------
-            % 3. HIGHLIGHT BUS POSITIONS
+            % 3. DRAW BUSES (SMOOTH MOTION)
             % ---------------------------
-            positions = [buses.currentNode];
-            nodeColors = obj.hPlot.NodeCData;
+            [bx, by] = obj.getBusPositions(buses);
+            set(obj.busScatter, 'XData', bx, 'YData', by);
 
-            % Force bus nodes to max intensity (red in jet colormap)
-            nodeColors(positions) = 1.2; % slightly above max for emphasis
-
-            obj.hPlot.NodeCData = nodeColors;
-
-            obj.hPlot.MarkerSize = 6 * ones(numnodes(obj.G),1);
-            obj.hPlot.MarkerSize(positions) = 10;
 
             % ---------------------------
             % 4. TITLE
             % ---------------------------
-            title(['Time Step ', num2str(t)]);
+            title(obj.ax, ['Time Step ', num2str(t)]);
 
             drawnow;
         end
 
-        %%
+        %% computing bus positions
+        function [bx, by] = getBusPositions(obj, buses)
+            n = length(buses);
+            bx = zeros(n,1);
+            by = zeros(n,1);
+
+            for i = 1:n
+                b = buses(i);
+
+                x1 = obj.X(b.currentNode);
+                y1 = obj.Y(b.currentNode);
+
+                x2 = obj.X(b.nextNode);
+                y2 = obj.Y(b.nextNode);
+
+                % Interpolate using progress
+                bx(i) = (1 - b.progress)*x1 + b.progress*x2;
+                by(i) = (1 - b.progress)*y1 + b.progress*y2;
+            end
+        end
+
     end
 end

@@ -1,0 +1,35 @@
+
+THE MAINLOOP:
+
+1. Initialize the simulation parameters, and the object data.
+	Simulation parameters: busCount (number of buses), studentCount (number of students),
+		time_window (length of time in minutes, for simulation to run),
+	Object states: There will be many objects in the simulation, so it seems reasonable to store them
+		in an array which will be used to access them during runtime.
+		listOfStudents - an array of studentCount students, each initialized with random parameters.
+		listOfBuses - an array of busCount buses, each initialized with random parameters.
+		listOfStations - while the Stations are the nodes of the graph, I doubt matlab allows us to associate arbitrary data with graphs. So, we store a list of Station objects. The stationId will be used to construct the graph, but the bulk of the data will be in the object itself.
+		
+	"Simulation metrics": things of interest to measure. For now, these include Proportion of students served (i.e. successfully routed), average time in transit of students, and proportion of failed deliveries.
+	
+
+Now, for the simulation loop:
+For each time step
+	if time is not up then...
+		for each Bus...
+			Based on your current state, update state (this is where the bulk of the logic lies)
+		for each Station...
+			Update the state
+		for each Student...
+			update the state
+		Update simulation metrics
+		Visualize
+	else if time is up
+		update simulation metrics
+		visualize
+		print reports
+		shut down
+
+
+That's it. That's the skeleton of the entire program. 
+
