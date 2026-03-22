@@ -11,9 +11,9 @@
 clear; clc;
 
 % INITIALIZE SIMULATION PARAMETERS
-BUS_COUNT = 50; % three buses
-STUDENT_COUNT = 50;
-TIME_SPAN = 25; % 200 time steps in minutes. About 4 hours
+BUS_COUNT = 5; % three buses
+STUDENT_COUNT = 100;
+TIME_SPAN = 100; % 200 time steps in minutes. About 4 hours
 
 % ROAD NETWORK SETUP
 STATION_COUNT = 11; % DO NOT CHANGE THIS!!!
@@ -143,4 +143,4 @@ end
 fprintf("Simulation complete.\n");
 simStats = computeSimStats(listOfStudents, listOfBuses);
 printReport(TIME_SPAN, BUS_COUNT, STUDENT_COUNT, simStats);
-%saveReport(TIME_SPAN, BUS_COUNT, STUDENT_COUNT, simStats, 'report.txt');
+saveReport(TIME_SPAN, BUS_COUNT, STUDENT_COUNT, simStats, 'report.txt');
