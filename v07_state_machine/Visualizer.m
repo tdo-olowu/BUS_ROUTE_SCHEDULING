@@ -31,6 +31,7 @@ classdef Visualizer
             title('Bus Simulation');
         end
 
+
         function obj = update(obj, stations, buses, t)
             % Clear figure and redraw (simple but reliable)
             % clf(obj.fig);
@@ -137,6 +138,7 @@ classdef Visualizer
             % Optional: increase marker size for buses
             obj.hPlot.MarkerSize = 6 * ones(numnodes(obj.G),1);
             obj.hPlot.MarkerSize(positions) = 10;
+            % change shape of bus nodes to square.
 
             % ---------------------------
             % 4. TITLE

@@ -7,7 +7,7 @@ classdef Bus
         currentNode
         nextNode
         progress
-        edgeWeight
+        %edgeWeight Not needed as a property
 
         % Path traversal
         path                % aka destinations?
@@ -20,9 +20,9 @@ classdef Bus
         capacity
 
         % Rates
-        boardingRate
+        boardingRate    % for now, number of students per timestep
         offloadingRate
-        speed
+        speed           % not in m/s, but proportion of speed limit e.g. 0.5, 1
 
         % State machine
         state
@@ -42,7 +42,7 @@ classdef Bus
             obj.nextNode = startNode;
             obj.progress = 0;
 
-            obj.edgeWeight = 1;  % default
+            %obj.edgeWeight = 1;  % default
 
             obj.path = [];
             obj.pathIndex = 1;
@@ -63,7 +63,7 @@ classdef Bus
         end
 
         %% State Update
-        function [obj, stations, students] = update(obj, G, stations, students)
+        function [obj, stations, students] = updateState(obj, G, stations, students)
             switch obj.state
                 case "START"
                     [obj, stations, students] = obj.handleStart(stations, students, G);
@@ -95,17 +95,18 @@ classdef Bus
 
         %% Hanlder for TRANSIT state
         function obj = handleTransit(obj, G)
-
             edgeIdx = findedge(G, obj.currentNode, obj.nextNode);
             weight = G.Edges.Weight(edgeIdx);
 
-            step = obj.speed / weight;
+            % this part is the trickiest.
+            % step = obj.speed / weight;
+            % obj.progress = obj.progress + step;
+            step = 1 / (obj.speed * weight);
             obj.progress = obj.progress + step;
 
             if obj.progress < 1
                 return;
-            elseif obj.progress >= 1 && obj.progress <= 1.01
-
+            elseif obj.progress >= 1 && obj.progress <= 1.10 % MgnOfError
                 obj.currentNode = obj.nextNode;
                 obj.progress = 0;
 
@@ -116,11 +117,10 @@ classdef Bus
                 end
 
                 obj.state = "PARKED";
-
             else
-                error("Progress overflow error");
+                fprintf("Too much progress");
+                %error("Progress overflow error");
             end
-
         end
 
         %% handler for PARKED state
@@ -133,8 +133,8 @@ classdef Bus
                 return;
             end
 
-            % If passengers waiting
-            if ~isempty(stations(obj.currentNode).waitingStudents)
+            % If passengers waiting on queue
+            if ~isempty(stations(obj.currentNode).queue)
                 obj = obj.enterBoarding(stations, students);
                 obj.state = "BOARDING";
                 return;
@@ -142,7 +142,6 @@ classdef Bus
 
             % No work → STOP
             obj.state = "STOP";
-
         end
 
         %% handler for BOARDING state
@@ -166,34 +165,24 @@ classdef Bus
 
         %% handler for DROPPING state aka offboarding
         function [obj, students] = handleDropping(obj, students)
-
             obj.timer = obj.timer - 1;
-
             if obj.timer > 0
                 return;
             end
-
             [obj, students] = obj.performDropping(students);
-
             obj.state = "BOARDING";
-
         end
 
-        %% function to board students at a given station
+        %% function to enter the boarding state. It sets the timer
         function obj = enterBoarding(obj, stations, students)
-
-            waiting = length(stations(obj.currentNode).waitingStudents);
+            waiting = length(stations(obj.currentNode).queue);
             available = obj.capacity - length(obj.currentStudents);
-
             n = min(waiting, available);
-
             obj.timer = ceil(n / obj.boardingRate);
-
         end
 
-        %% function to drop students at current station
+        %% function to enter the drop state. It sets the timer
         function obj = enterDropping(obj, students)
-
             count = 0;
 
             for sid = obj.currentStudents
@@ -201,9 +190,8 @@ classdef Bus
                     count = count + 1;
                 end
             end
-
+            % n students / (s students per timestep) = ceil(n/s) timesteps
             obj.timer = ceil(count / obj.offloadingRate);
-
         end
 
         %% perform Boarding

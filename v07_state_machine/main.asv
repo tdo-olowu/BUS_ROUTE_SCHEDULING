@@ -28,9 +28,7 @@ SPEED_LIMIT = 1; % explanation of this in README.
 s = [1 2 3 4 4 4 5 6 7 8 9 10 11];
 t = [2 3 4 5 7 9 6 8 8 9 10 11 1]; % (s,t) is an edge
 % weights represent avg time it takes to cross road if moving at speed limit.
-% actual time spent depends on speed limit and distance
-% for this simulation, weights are a number of timesteps, to keep it
-% simple.
+% actual time spent is 
 weights = 1*[5 10 1 3 5 1 5 5 5 2 6 3 7];
 names = {'Gate' 'OpaDam' 'BankArea' 'MainBusStop' 'Moremi' ...
          'Awo' 'NewMarket' 'Faj' 'CarPark' 'ReligiousGround' 'LocalGovt'};
@@ -60,7 +58,7 @@ BUS_PARKS = [4, 9];
 
 BUS_CAPACITY = 5;   % in people
 BUS_MILEAGE = 20;   % total mileage needed before refuel, in metres
-BUS_SPEED = 0.5;     % half the speed limit
+BUS_SPEED = 10;     % in metres per minute. Weird, but makes sense in ctx
 BUS_WAIT_RATE = 1;  % number of minutes spent when bus is idle.
                     % handles upload, offload and refuel time for now.
 

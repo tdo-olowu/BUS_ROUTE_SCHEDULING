@@ -7,7 +7,7 @@ classdef Bus
         currentNode
         nextNode
         progress
-        edgeWeight
+        %edgeWeight Not needed as a property
 
         % Path traversal
         path                % aka destinations?
@@ -42,7 +42,7 @@ classdef Bus
             obj.nextNode = startNode;
             obj.progress = 0;
 
-            obj.edgeWeight = 1;  % default
+            %obj.edgeWeight = 1;  % default
 
             obj.path = [];
             obj.pathIndex = 1;
@@ -95,10 +95,14 @@ classdef Bus
 
         %% Hanlder for TRANSIT state
         function obj = handleTransit(obj, G)
-
             edgeIdx = findedge(G, obj.currentNode, obj.nextNode);
             weight = G.Edges.Weight(edgeIdx);
 
+            % this part is the trickiest.
+            % both speed and weight were originally in units of time,
+            % but to correct this, speed should be a dimensionless unit
+            % representing proportion of the speed limit.
+            % then step = weight / obj.proportional_speed
             step = obj.speed / weight;
             obj.progress = obj.progress + step;
 
@@ -120,7 +124,6 @@ classdef Bus
             else
                 error("Progress overflow error");
             end
-
         end
 
         %% handler for PARKED state
@@ -133,8 +136,8 @@ classdef Bus
                 return;
             end
 
-            % If passengers waiting
-            if ~isempty(stations(obj.currentNode).waitingStudents)
+            % If passengers waiting on queue
+            if ~isempty(stations(obj.currentNode).queue)
                 obj = obj.enterBoarding(stations, students);
                 obj.state = "BOARDING";
                 return;
@@ -142,7 +145,6 @@ classdef Bus
 
             % No work → STOP
             obj.state = "STOP";
-
         end
 
         %% handler for BOARDING state
@@ -166,34 +168,24 @@ classdef Bus
 
         %% handler for DROPPING state aka offboarding
         function [obj, students] = handleDropping(obj, students)
-
             obj.timer = obj.timer - 1;
-
             if obj.timer > 0
                 return;
             end
-
             [obj, students] = obj.performDropping(students);
-
             obj.state = "BOARDING";
-
         end
 
-        %% function to board students at a given station
+        %% function to enter the boarding state. It sets the timer
         function obj = enterBoarding(obj, stations, students)
-
-            waiting = length(stations(obj.currentNode).waitingStudents);
+            waiting = length(stations(obj.currentNode).queue);
             available = obj.capacity - length(obj.currentStudents);
-
             n = min(waiting, available);
-
             obj.timer = ceil(n / obj.boardingRate);
-
         end
 
-        %% function to drop students at current station
+        %% function to enter the drop state. It sets the timer
         function obj = enterDropping(obj, students)
-
             count = 0;
 
             for sid = obj.currentStudents
@@ -201,9 +193,8 @@ classdef Bus
                     count = count + 1;
                 end
             end
-
+            % n students / (s students per timestep) = ceil(n/s) timesteps
             obj.timer = ceil(count / obj.offloadingRate);
-
         end
 
         %% perform Boarding
@@ -220,9 +211,8 @@ classdef Bus
                 students(sid).busId = obj.id;
             end
 
-            station.waitingStudents(1:n) = [];
+            station.queue(1:n) = [];
             stations(obj.currentNode) = station;
-
         end
 
         %% perform Dropping
