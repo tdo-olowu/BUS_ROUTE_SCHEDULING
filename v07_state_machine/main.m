@@ -12,7 +12,7 @@ clear; clc;
 
 % INITIALIZE SIMULATION PARAMETERS
 BUS_COUNT = 3; % three buses
-STUDENT_COUNT = 50;
+STUDENT_COUNT = 100;
 TIME_SPAN = 50; % 200 time steps in minutes. About 4 hours
 
 % ROAD NETWORK SETUP
@@ -31,7 +31,7 @@ t = [2 3 4 5 7 9 6 8 8 9 10 11 1]; % (s,t) is an edge
 % actual time spent depends on speed limit and distance
 % for this simulation, weights are a number of timesteps, to keep it
 % simple.
-weights = 1*[5 10 1 3 5 1 5 5 5 2 6 3 7];
+weights = 2*[5 10 1 3 5 1 5 5 5 2 6 3 7];
 names = {'Gate' 'OpaDam' 'BankArea' 'MainBusStop' 'Moremi' ...
          'Awo' 'NewMarket' 'Faj' 'CarPark' 'ReligiousGround' 'LocalGovt'};
 G = digraph(s, t, weights, names);

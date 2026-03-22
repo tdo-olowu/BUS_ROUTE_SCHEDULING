@@ -102,7 +102,7 @@ classdef Bus
             weight = G.Edges.Weight(edgeIdx);
 
             obj.expectedTimeOfJourney = ceil(weight / obj.speed);
-            obj.timer = obj.expectedTimeOfJourney;
+            obj.timer = 0;
             fprintf("TIMER IN PROGRESS: %d\n", obj.timer);
         end
 
@@ -116,18 +116,20 @@ classdef Bus
             % obj.progress = obj.progress + step;
 
             % calculate progress inefficiently
-            progress = (1 - (obj.timer / obj.expectedTimeOfJourney));
-            %fprintf("\tProgress for Bus %d: %f\n", obj.id, progress);
+            obj.progress = (obj.timer / obj.expectedTimeOfJourney);
+            fprintf("\tProgress for Bus %d: %f\n", obj.id, obj.progress);
             % WE ARE GETTING NEGATIVE TIMES!
-            obj.timer = obj.timer - 1;
-            if obj.timer < obj.expectedTimeOfJourney
-                fprintf("\tTIME LARGER THAN EXPECTED for Bus%d!: t=%d, e=%d\n", ...
-                    obj.id, obj.timer, obj.expectedTimeOfJourney);
-            end
+            obj.timer = obj.timer + 1;
+            % if obj.timer > obj.expectedTimeOfJourney
+            %     fprintf("\tTIME LARGER THAN EXPECTED for Bus%d!: t=%d, e=%d\n", ...
+            %         obj.id, obj.timer, obj.expectedTimeOfJourney);
+            % end
 
+            % better idea - cf time with expected for flow control
+            % progress is not needed but compute it by end.
             if obj.progress < 1
                 return;
-            elseif obj.progress >= 1 && obj.progress <= 1.10 % MgnOfError
+            elseif obj.progress >= 1 && obj.progress <= 1.01 % MgnOfError
                 obj.currentNode = obj.nextNode;
                 obj.progress = 0;
 
@@ -138,7 +140,7 @@ classdef Bus
                 end
 
                 obj.state = "PARKED";
-            else
+            else    % e.g. negative prorgess
                 fprintf("unusual progress");
                 %error("Progress overflow error");
             end
