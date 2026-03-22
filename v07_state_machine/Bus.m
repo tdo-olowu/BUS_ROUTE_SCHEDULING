@@ -103,7 +103,6 @@ classdef Bus
 
             obj.expectedTimeOfJourney = ceil(weight / obj.speed);
             obj.timer = 0;
-            fprintf("TIMER IN PROGRESS: %d\n", obj.timer);
         end
 
         %% Hanlder for TRANSIT state
@@ -117,8 +116,7 @@ classdef Bus
 
             % calculate progress inefficiently
             obj.progress = (obj.timer / obj.expectedTimeOfJourney);
-            fprintf("\tProgress for Bus %d: %f\n", obj.id, obj.progress);
-            % WE ARE GETTING NEGATIVE TIMES!
+            % fprintf("\tProgress for Bus %d: %f\n", obj.id, obj.progress);
             obj.timer = obj.timer + 1;
             % if obj.timer > obj.expectedTimeOfJourney
             %     fprintf("\tTIME LARGER THAN EXPECTED for Bus%d!: t=%d, e=%d\n", ...

@@ -11,9 +11,9 @@
 clear; clc;
 
 % INITIALIZE SIMULATION PARAMETERS
-BUS_COUNT = 3; % three buses
-STUDENT_COUNT = 100;
-TIME_SPAN = 50; % 200 time steps in minutes. About 4 hours
+BUS_COUNT = 50; % three buses
+STUDENT_COUNT = 50;
+TIME_SPAN = 100; % 200 time steps in minutes. About 4 hours
 
 % ROAD NETWORK SETUP
 STATION_COUNT = 11; % DO NOT CHANGE THIS!!!
@@ -60,7 +60,7 @@ BUS_PARKS = [4, 9];
 
 BUS_CAPACITY = 5;   % in people
 BUS_MILEAGE = 20;   % total mileage needed before refuel, in metres
-BUS_SPEED = 0.5;     % half the speed limit. keep it b/w 0 and 1
+BUS_SPEED = 1.0;    % move at the speed limit. keep it b/w 0 and 1
 BUS_WAIT_RATE = 1;  % number of minutes spent when bus is idle.
                     % handles upload, offload and refuel time for now.
 
@@ -115,8 +115,9 @@ for t = 1:TIME_SPAN
     fprintf("Time step: %d\n", t);
     % ---- Update Buses ----
     for i = 1:length(listOfBuses)
-        % the update will depend on a lot more state information than just stations.
-        listOfBuses(i) = listOfBuses(i).updateState(G, listOfStations, listOfStudents);
+        % listOfBuses(i) = listOfBuses(i).updateState(G, listOfStations, listOfStudents);
+        [listOfBuses(i), listOfStations, listOfStudents] = ...
+    listOfBuses(i).updateState(G, listOfStations, listOfStudents);
         % fprintf('\tBus %d at %d | Passengers: %d | Fuel: %d\n', ...
         %      i, listOfBuses(i).currentNode, ...
         %         length(listOfBuses(i).currentStudents), ...
@@ -140,5 +141,6 @@ end
 %   FINALIZATION
 % ==============================
 fprintf("Simulation complete.\n");
-% performance_metrics = updateMetrics(performance_metrics, listOfStudents);
-% printReport(performance_metrics);
+simStats = computeSimStats(listOfStudents, listOfBuses);
+printReport(TIME_SPAN, BUS_COUNT, STUDENT_COUNT, simStats);
+%saveReport(TIME_SPAN, BUS_COUNT, STUDENT_COUNT, simStats, 'report.txt');
